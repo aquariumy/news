@@ -9,6 +9,10 @@
 #     Each JSONL line: {"title":"...","body":"...","url":"..."}
 #     The URL is required when dedup is desired (otherwise post will not dedup).
 #
+#   Stdin mode (no intermediate queue file, no Write-tool permission prompt):
+#     post-chatwork.sh --process-stdin <room_id>
+#     Reads the same JSONL format from stdin (typically via heredoc).
+#
 # Dedup: a posted URL is skipped if the same URL appears in
 #        ~/.morning-brief/posted-urls.jsonl within the last 14 days.
 #
@@ -169,9 +173,19 @@ if [ "${1:-}" = "--process-queue" ]; then
   exit 0
 fi
 
+if [ "${1:-}" = "--process-stdin" ]; then
+  if [ "$#" -ne 2 ]; then
+    echo "usage: $(basename "$0") --process-stdin <room_id>" >&2
+    exit 2
+  fi
+  process_queue /dev/stdin "$2"
+  exit 0
+fi
+
 if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
   echo "usage: $(basename "$0") <room_id> <title> <body> [<url>]" >&2
   echo "       $(basename "$0") --process-queue <jsonl_file> <room_id>" >&2
+  echo "       $(basename "$0") --process-stdin <room_id>" >&2
   exit 2
 fi
 
