@@ -30,7 +30,7 @@ API_BASE="https://api.chatwork.com/v2"
 LOG_FILE="$HOME/.morning-brief/posted-urls.jsonl"
 # Anti-burst pause between successful/failed POSTs (skipped items don't sleep).
 # Chatwork's 5-min/300-req limit is an average; short bursts can hit 429.
-POST_INTERVAL_SEC="${POST_INTERVAL_SEC:-0.4}"
+POST_INTERVAL_SEC="${POST_INTERVAL_SEC:-30.0}"
 
 load_token() {
   if [ -z "${CW_API_TOKEN:-}" ]; then
