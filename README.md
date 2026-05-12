@@ -28,18 +28,21 @@ news/
    ```
 3. Chatwork API トークンを保存:
    ```bash
-   mkdir -p ~/.claude/secrets
-   echo -n "<your-token>" > ~/.claude/secrets/chatwork-token
-   chmod 600 ~/.claude/secrets/chatwork-token
+   mkdir -p ~/.morning-brief
+   echo -n "<your-token>" > ~/.morning-brief/chatwork-token
+   chmod 600 ~/.morning-brief/chatwork-token
    ```
 4. `~/.claude/settings.json` の `permissions.allow` に以下を追加:
    - `Bash(/Users/<you>/.claude/bin/post-chatwork.sh:*)`
+   - `Bash(/Users/<you>/Documents/news/morning-brief/post-chatwork.sh:*)`
    - `WebSearch`
-   - `Write(/Users/<you>/.claude/data/morning-brief/queue.jsonl)`
+   - `Write(/Users/<you>/.morning-brief/queue.jsonl)`
 5. Claude Code でスケジュールタスクを登録（cron `0 4 * * *`）し、`SKILL.md` の内容を prompt として設定
 
-## ランタイムデータ（Git 管理外）
+## ランタイムデータ（Git 管理外、`~/.morning-brief/` に集約）
 
-- `~/.claude/data/morning-brief/posted-urls.jsonl` — dedup ログ（14 日有効）
-- `~/.claude/data/morning-brief/queue.jsonl` — エージェントが各実行で書き出すキュー（毎回上書き）
-- `~/.claude/secrets/chatwork-token` — API トークン
+- `~/.morning-brief/posted-urls.jsonl` — dedup ログ（14 日有効）
+- `~/.morning-brief/queue.jsonl` — エージェントが各実行で書き出すキュー（毎回上書き）
+- `~/.morning-brief/chatwork-token` — API トークン
+
+注: `~/.claude/` 配下は Claude Code が機密領域扱いし allowlist より優先してプロンプトを出すため、ランタイムデータは外に置く必要がある。

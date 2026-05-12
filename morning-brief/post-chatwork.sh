@@ -10,24 +10,24 @@
 #     The URL is required when dedup is desired (otherwise post will not dedup).
 #
 # Dedup: a posted URL is skipped if the same URL appears in
-#        ~/.claude/data/morning-brief/posted-urls.jsonl within the last 14 days.
+#        ~/.morning-brief/posted-urls.jsonl within the last 14 days.
 #
-# Token: read from $CW_API_TOKEN, then ~/.claude/secrets/chatwork-token.
+# Token: read from $CW_API_TOKEN, then ~/.morning-brief/chatwork-token.
 
 set -u
 
 API_BASE="https://api.chatwork.com/v2"
-LOG_FILE="$HOME/.claude/data/morning-brief/posted-urls.jsonl"
+LOG_FILE="$HOME/.morning-brief/posted-urls.jsonl"
 
 load_token() {
   if [ -z "${CW_API_TOKEN:-}" ]; then
-    local token_file="$HOME/.claude/secrets/chatwork-token"
+    local token_file="$HOME/.morning-brief/chatwork-token"
     if [ -r "$token_file" ]; then
       CW_API_TOKEN=$(cat "$token_file")
     fi
   fi
   if [ -z "${CW_API_TOKEN:-}" ]; then
-    echo "error: CW_API_TOKEN is not set and $HOME/.claude/secrets/chatwork-token is missing" >&2
+    echo "error: CW_API_TOKEN is not set and $HOME/.morning-brief/chatwork-token is missing" >&2
     exit 3
   fi
 }
