@@ -28,6 +28,9 @@ set -u
 
 API_BASE="https://api.chatwork.com/v2"
 LOG_FILE="$HOME/.morning-brief/posted-urls.jsonl"
+# Anti-burst pause between successful/failed POSTs (skipped items don't sleep).
+# Chatwork's 5-min/300-req limit is an average; short bursts can hit 429.
+POST_INTERVAL_SEC="${POST_INTERVAL_SEC:-0.4}"
 
 load_token() {
   if [ -z "${CW_API_TOKEN:-}" ]; then
@@ -146,6 +149,7 @@ process_queue() {
       0:D) D_ok=$((D_ok+1)) ;; 2:D) D_skip=$((D_skip+1)) ;; *:D) D_fail=$((D_fail+1)) ;;
       0:X) X_ok=$((X_ok+1)) ;; 2:X) X_skip=$((X_skip+1)) ;; *:X) X_fail=$((X_fail+1)) ;;
     esac
+    [ "$rc" != "2" ] && sleep "$POST_INTERVAL_SEC"
   done < "$queue_file"
 
   local summary="朝刊送信完了:"
@@ -199,6 +203,7 @@ process_tsv() {
       0:D) D_ok=$((D_ok+1)) ;; 2:D) D_skip=$((D_skip+1)) ;; *:D) D_fail=$((D_fail+1)) ;;
       0:X) X_ok=$((X_ok+1)) ;; 2:X) X_skip=$((X_skip+1)) ;; *:X) X_fail=$((X_fail+1)) ;;
     esac
+    [ "$rc" != "2" ] && sleep "$POST_INTERVAL_SEC"
   done
 
   local summary="朝刊送信完了:"
