@@ -13,6 +13,12 @@
 #     post-chatwork.sh --process-stdin <room_id>
 #     Reads the same JSONL format from stdin (typically via heredoc).
 #
+#   TSV mode (avoids Claude Code's brace+quote obfuscation heuristic that fires on JSON):
+#     post-chatwork.sh --process-tsv <room_id>
+#     Reads TAB-separated lines from stdin: category<TAB>title<TAB>body<TAB>url
+#     category is A/B/C/D/X. The script prefixes the title with [category] automatically.
+#     In body, the literal two-char sequence \n is converted to a real newline.
+#
 # Dedup: a posted URL is skipped if the same URL appears in
 #        ~/.morning-brief/posted-urls.jsonl within the last 14 days.
 #
@@ -160,6 +166,59 @@ process_queue() {
   echo "${summary%,}"
 }
 
+# Process TSV from stdin. Args: room_id.
+# Format per line (TAB-separated): category<TAB>title<TAB>body<TAB>url
+process_tsv() {
+  local room_id="$1"
+
+  local A_ok=0 A_skip=0 A_fail=0
+  local B_ok=0 B_skip=0 B_fail=0
+  local C_ok=0 C_skip=0 C_fail=0
+  local D_ok=0 D_skip=0 D_fail=0
+  local X_ok=0 X_skip=0 X_fail=0
+
+  local cat title body url display_title rc
+  while IFS=$'\t' read -r cat title body url; do
+    if [ -z "$cat" ] && [ -z "$title" ] && [ -z "$body" ]; then
+      continue
+    fi
+    if [ -z "$title" ] || [ -z "$body" ]; then
+      echo "WARN skipping malformed TSV line: cat=$cat title=$title" >&2
+      continue
+    fi
+    [ -z "$cat" ] && cat="X"
+    body=$(printf '%b' "$body")
+    display_title="[$cat] $title"
+
+    post_one "$room_id" "$display_title" "$body" "$url"
+    rc=$?
+    case "$rc:$cat" in
+      0:A) A_ok=$((A_ok+1)) ;; 2:A) A_skip=$((A_skip+1)) ;; *:A) A_fail=$((A_fail+1)) ;;
+      0:B) B_ok=$((B_ok+1)) ;; 2:B) B_skip=$((B_skip+1)) ;; *:B) B_fail=$((B_fail+1)) ;;
+      0:C) C_ok=$((C_ok+1)) ;; 2:C) C_skip=$((C_skip+1)) ;; *:C) C_fail=$((C_fail+1)) ;;
+      0:D) D_ok=$((D_ok+1)) ;; 2:D) D_skip=$((D_skip+1)) ;; *:D) D_fail=$((D_fail+1)) ;;
+      0:X) X_ok=$((X_ok+1)) ;; 2:X) X_skip=$((X_skip+1)) ;; *:X) X_fail=$((X_fail+1)) ;;
+    esac
+  done
+
+  local summary="朝刊送信完了:"
+  local c ok sk fa total part
+  for c in A B C D X; do
+    eval "ok=\$${c}_ok"
+    eval "sk=\$${c}_skip"
+    eval "fa=\$${c}_fail"
+    total=$((ok + sk + fa))
+    if [ "$c" = "X" ] && [ "$total" -eq 0 ]; then
+      continue
+    fi
+    part=" $c $ok/$total"
+    [ "$sk" -gt 0 ] && part="$part ($sk SKIP)"
+    [ "$fa" -gt 0 ] && part="$part ($fa FAIL)"
+    summary="$summary$part,"
+  done
+  echo "${summary%,}"
+}
+
 # --- main ---
 load_token
 ensure_log
@@ -182,10 +241,20 @@ if [ "${1:-}" = "--process-stdin" ]; then
   exit 0
 fi
 
+if [ "${1:-}" = "--process-tsv" ]; then
+  if [ "$#" -ne 2 ]; then
+    echo "usage: $(basename "$0") --process-tsv <room_id>" >&2
+    exit 2
+  fi
+  process_tsv "$2"
+  exit 0
+fi
+
 if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
   echo "usage: $(basename "$0") <room_id> <title> <body> [<url>]" >&2
   echo "       $(basename "$0") --process-queue <jsonl_file> <room_id>" >&2
   echo "       $(basename "$0") --process-stdin <room_id>" >&2
+  echo "       $(basename "$0") --process-tsv <room_id>" >&2
   exit 2
 fi
 
