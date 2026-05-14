@@ -9,7 +9,8 @@
 #   fetch-and-post.sh --dry-run # print TSV that would be sent, do not post
 #
 # Dedup is delegated to post-chatwork.sh (URL-based, 14-day window via
-# ~/.morning-brief/posted-urls.jsonl).
+# ~/Documents/news/it-sheet-watch/posted-urls.jsonl, passed through the
+# NEWS_POSTED_LOG_FILE env var).
 
 set -u
 
