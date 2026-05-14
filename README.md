@@ -4,6 +4,7 @@ Aquariumy / Harbor BCG プロジェクトの自動配信ツール群。
 
 - **morning-brief** — 毎朝 04:00 に 4 カテゴリ（Web3 ゲーム / 音楽配信 / AI ツール / 小規模スタジオ向けマーケ）の TOP3 ニュースを集め、Chatwork に 1 ニュース 1 投稿で配信
 - **it-sheet-watch** — 毎朝 05:00 に「ITビジネスの原理 実践編 講義まとめ」スプレッドシートを監視し、前月以降に追加された講義／対談行を Chatwork へ通知
+- **local-guide** — 毎朝 03:00 に 4 カテゴリ（観光行政・訪日インバウンド / 日本地理 / 日本歴史 / 高尾山・関東オタク聖地）の TOP3 ニュース（教養としての時事）を集め、専用 Chatwork ルームに配信
 
 ## ディレクトリ構成
 
@@ -17,16 +18,21 @@ news/
 │   ├── posted-urls.jsonl  # ランタイム dedup ログ（14 日有効）
 │   ├── queue.jsonl        # エージェントが各実行で書き出すキュー（毎回上書き）
 │   └── icon.png
-└── it-sheet-watch/
+├── it-sheet-watch/
+│   ├── SKILL.md           # scheduled-task のプロンプト本体
+│   ├── fetch-and-post.sh  # gviz CSV 取得 → 抽出 → post-chatwork.sh 呼び出し
+│   └── posted-urls.jsonl  # ランタイム dedup ログ
+└── local-guide/
     ├── SKILL.md           # scheduled-task のプロンプト本体
-    ├── fetch-and-post.sh  # gviz CSV 取得 → 抽出 → post-chatwork.sh 呼び出し
-    └── posted-urls.jsonl  # ランタイム dedup ログ
+    ├── posted-urls.jsonl  # ランタイム dedup ログ（14 日有効）
+    └── icon.png
 ```
 
 `SKILL.md` は scheduled-task の固定パスから symlink される（リポジトリ側が正）:
 
 - `~/.claude/scheduled-tasks/morning-brief/SKILL.md`  → `~/Documents/news/morning-brief/SKILL.md`
 - `~/.claude/scheduled-tasks/it-sheet-watch/SKILL.md` → `~/Documents/news/it-sheet-watch/SKILL.md`
+- `~/.claude/scheduled-tasks/local-guide/SKILL.md`    → `~/Documents/news/local-guide/SKILL.md`
 
 ## セットアップ（新マシン向け）
 
@@ -38,9 +44,10 @@ news/
    ```
 3. scheduled-task の SKILL.md を symlink:
    ```bash
-   mkdir -p ~/.claude/scheduled-tasks/morning-brief ~/.claude/scheduled-tasks/it-sheet-watch
+   mkdir -p ~/.claude/scheduled-tasks/morning-brief ~/.claude/scheduled-tasks/it-sheet-watch ~/.claude/scheduled-tasks/local-guide
    ln -s ~/Documents/news/morning-brief/SKILL.md  ~/.claude/scheduled-tasks/morning-brief/SKILL.md
    ln -s ~/Documents/news/it-sheet-watch/SKILL.md ~/.claude/scheduled-tasks/it-sheet-watch/SKILL.md
+   ln -s ~/Documents/news/local-guide/SKILL.md    ~/.claude/scheduled-tasks/local-guide/SKILL.md
    ```
 4. `~/.claude/settings.json` の `permissions` に以下を追加:
    ```json
@@ -52,7 +59,7 @@ news/
      "WebSearch", "WebFetch"
    ]
    ```
-5. Claude Code でスケジュールタスクを 2 件登録（morning-brief: cron `0 4 * * *`, it-sheet-watch: `0 5 * * *`）
+5. Claude Code でスケジュールタスクを 3 件登録（morning-brief: cron `0 4 * * *`, it-sheet-watch: `0 5 * * *`, local-guide: `0 3 * * *`）
 
 ## post-chatwork.sh の使い方
 
