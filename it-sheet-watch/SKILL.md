@@ -16,7 +16,7 @@ description: 「ITビジネスの原理 実践編 講義まとめ」スプレッ
 - 対象: gid=54493688 の「種類」列が `講義` / `対談` / `特別対談` / `特別鼎談` / `引用対談` / `臨時対談`
 - 抽出ウィンドウ: 「投稿日」列が **前月初日以降**
 - 投稿先 Chatwork ルーム: `436582769`
-- dedup: `post-chatwork.sh` 内蔵の URL ベース（過去 14 日）に委譲
+- dedup: `_shared/post-chatwork.sh` 内蔵の URL ベース（過去 14 日）。dedup ログは `/Users/aquariumy/Documents/news/it-sheet-watch/posted-urls.jsonl`（it-sheet-watch 専用）
 - 投稿フォーマット: `[K]` または `[T]` プレフィックス + タイトル / body = `<種類> <No> / <投稿日>` / 本編 Campfire URL
 
 # 完了報告

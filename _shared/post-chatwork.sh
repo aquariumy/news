@@ -19,28 +19,38 @@
 #     category is A/B/C/D/X. The script prefixes the title with [category] automatically.
 #     In body, the literal two-char sequence \n is converted to a real newline.
 #
-# Dedup: a posted URL is skipped if the same URL appears in
-#        ~/.morning-brief/posted-urls.jsonl within the last 14 days.
+# Dedup: a posted URL is skipped if the same URL appears in the project's
+#        dedup log within the last 14 days. The caller MUST set
+#        NEWS_POSTED_LOG_FILE to an absolute path; otherwise the script aborts
+#        so that two projects cannot accidentally share a log.
 #
-# Token: read from $CW_API_TOKEN, then ~/.morning-brief/chatwork-token.
+# Token: read from $CW_API_TOKEN, then from <script-dir>/chatwork-token
+#        (i.e. /Users/aquariumy/Documents/news/_shared/chatwork-token).
 
 set -u
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 API_BASE="https://api.chatwork.com/v2"
-LOG_FILE="$HOME/.morning-brief/posted-urls.jsonl"
+
+if [ -z "${NEWS_POSTED_LOG_FILE:-}" ]; then
+  echo "error: NEWS_POSTED_LOG_FILE is required (per-project dedup log absolute path)" >&2
+  exit 5
+fi
+LOG_FILE="$NEWS_POSTED_LOG_FILE"
+
 # Anti-burst pause between successful/failed POSTs (skipped items don't sleep).
 # Chatwork's 5-min/300-req limit is an average; short bursts can hit 429.
 POST_INTERVAL_SEC="${POST_INTERVAL_SEC:-30.0}"
 
 load_token() {
   if [ -z "${CW_API_TOKEN:-}" ]; then
-    local token_file="$HOME/.morning-brief/chatwork-token"
+    local token_file="$SCRIPT_DIR/chatwork-token"
     if [ -r "$token_file" ]; then
       CW_API_TOKEN=$(cat "$token_file")
     fi
   fi
   if [ -z "${CW_API_TOKEN:-}" ]; then
-    echo "error: CW_API_TOKEN is not set and $HOME/.morning-brief/chatwork-token is missing" >&2
+    echo "error: CW_API_TOKEN is not set and $SCRIPT_DIR/chatwork-token is missing" >&2
     exit 3
   fi
 }

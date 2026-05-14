@@ -16,7 +16,8 @@ set -u
 SHEET_ID="1BHkAdIsrhcHzS8c8f6ys1AFGhVhgLk9s03clyQea2nk"
 GID="54493688"
 ROOM_ID="436582769"
-POSTER="/Users/aquariumy/Documents/news/morning-brief/post-chatwork.sh"
+POSTER="/Users/aquariumy/Documents/news/_shared/post-chatwork.sh"
+POSTED_LOG="/Users/aquariumy/Documents/news/it-sheet-watch/posted-urls.jsonl"
 
 DRY_RUN=0
 if [ "${1:-}" = "--dry-run" ]; then
@@ -106,4 +107,4 @@ if [ ! -x "$POSTER" ]; then
   exit 1
 fi
 
-printf '%s\n' "$tsv" | "$POSTER" --process-tsv "$ROOM_ID"
+printf '%s\n' "$tsv" | NEWS_POSTED_LOG_FILE="$POSTED_LOG" "$POSTER" --process-tsv "$ROOM_ID"
